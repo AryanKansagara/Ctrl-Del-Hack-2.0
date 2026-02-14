@@ -16,19 +16,22 @@ export default function ConversationView() {
   const [newSummary, setNewSummary] = useState("");
   const [saving, setSaving] = useState(false);
 
+  const load = async () => {
+    setError(null);
+    setLoading(true);
+    try {
+      const [p, c] = await Promise.all([getPerson(id), getLastConversation(id)]);
+      setPerson(p);
+      setConversation(c);
+    } catch {
+      setError("Could not load. Is the API running?");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    (async () => {
-      try {
-        const [p, c] = await Promise.all([getPerson(id), getLastConversation(id)]);
-        setPerson(p);
-        setConversation(c);
-        setError(null);
-      } catch (e) {
-        setError("Could not load.");
-      } finally {
-        setLoading(false);
-      }
-    })();
+    load();
   }, [id]);
 
   const handleAddConversation = async (e: React.FormEvent) => {
@@ -48,6 +51,15 @@ export default function ConversationView() {
   };
 
   if (loading) return <div className="min-h-screen flex items-center justify-center p-6">Loading...</div>;
+  if (error && !person) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-6 gap-4">
+        <p className="text-red-700 text-center">{error}</p>
+        <button type="button" onClick={load} className="min-h-touch px-4 py-2 bg-teal-600 text-white rounded-lg font-medium">Try again</button>
+        <Link to="/people" className="min-h-touch px-4 py-2 bg-teal-600 text-white rounded-lg font-medium">Back to People</Link>
+      </div>
+    );
+  }
   if (error || !person) return <div className="min-h-screen flex flex-col items-center justify-center p-6 text-red-700">{error || "Not found"}</div>;
 
   return (

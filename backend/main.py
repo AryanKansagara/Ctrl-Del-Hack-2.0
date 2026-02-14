@@ -1,9 +1,15 @@
 """Remember Me MVP — FastAPI backend."""
 import json
+import os
 from contextlib import asynccontextmanager
+
+from dotenv import load_dotenv
+load_dotenv()
+from datetime import date
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
+import httpx
 
 from database import get_db, init_db
 from models import Person, Conversation, Reminder, EmergencyContact
@@ -14,6 +20,7 @@ from schemas import (
     PersonForRecognition,
     ConversationCreate,
     ConversationResponse,
+    SummarizeAndSaveRequest,
     ReminderCreate,
     ReminderUpdate,
     ReminderResponse,
@@ -183,6 +190,70 @@ def create_conversation(data: ConversationCreate, db: Session = Depends(get_db))
     if not person:
         raise HTTPException(status_code=404, detail="Person not found")
     c = Conversation(person_id=data.person_id, date=data.date, summary=data.summary)
+    db.add(c)
+    db.commit()
+    db.refresh(c)
+    return ConversationResponse(id=c.id, person_id=c.person_id, date=c.date, summary=c.summary)
+
+
+GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
+GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
+SUMMARY_MODEL = "llama-3.1-8b-instant"
+
+
+def _summarize_transcript(transcript: str) -> str:
+    """Call Groq to produce a 1-2 line reminder of what was talked about (no quoting)."""
+    if not GROQ_API_KEY:
+        raise HTTPException(
+            status_code=503,
+            detail="Groq API key not configured. Set GROQ_API_KEY.",
+        )
+    text = (transcript or "").strip()[:8000]
+    if not text:
+        return "No conversation recorded."
+    prompt = (
+        "Below is a conversation. Write exactly 1-2 short lines that remind the reader what they talked about. "
+        "Do NOT quote the conversation word for word. Just state the topic or gist in plain language (e.g. 'Talked about the garden and weekend plans.'). "
+        "Output only those 1-2 lines, nothing else.\n\nConversation:\n"
+    ) + text
+    try:
+        with httpx.Client(timeout=30.0) as client:
+            r = client.post(
+                GROQ_URL,
+                headers={
+                    "Authorization": f"Bearer {GROQ_API_KEY}",
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "model": SUMMARY_MODEL,
+                    "messages": [{"role": "user", "content": prompt}],
+                },
+            )
+            r.raise_for_status()
+            data = r.json()
+            choices = data.get("choices") or []
+            if choices:
+                content = (choices[0].get("message") or {}).get("content") or ""
+                summary = (content or "").strip()
+                if summary:
+                    return summary[:500]
+    except httpx.HTTPError as e:
+        raise HTTPException(status_code=502, detail=f"Groq request failed: {e!s}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Summarization failed: {e!s}")
+    return (text[:500] + "...") if len(text) > 500 else text
+
+
+@app.post("/api/conversations/summarize-and-save", response_model=ConversationResponse)
+def summarize_and_save_conversation(
+    data: SummarizeAndSaveRequest, db: Session = Depends(get_db)
+):
+    person = db.query(Person).filter(Person.id == data.person_id).first()
+    if not person:
+        raise HTTPException(status_code=404, detail="Person not found")
+    summary = _summarize_transcript(data.transcript)
+    today = date.today().isoformat()
+    c = Conversation(person_id=data.person_id, date=today, summary=summary)
     db.add(c)
     db.commit()
     db.refresh(c)

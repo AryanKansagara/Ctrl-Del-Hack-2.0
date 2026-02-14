@@ -34,7 +34,16 @@ export default function PeopleList() {
   };
 
   if (loading) return <div className="min-h-screen flex items-center justify-center p-6">Loading...</div>;
-  if (error) return <div className="min-h-screen flex flex-col items-center justify-center p-6 text-red-700">{error}</div>;
+  if (error) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-6 text-red-700 gap-4">
+        <p className="text-center">{error}</p>
+        <button type="button" onClick={() => { setError(null); setLoading(true); load(); }} className="min-h-touch px-4 py-2 bg-teal-600 text-white rounded-lg font-medium">
+          Try again
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-teal-50">

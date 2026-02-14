@@ -1,4 +1,19 @@
 const API = "/api";
+const FETCH_TIMEOUT_MS = 15000;
+
+async function fetchWithTimeout(url: string, options: RequestInit = {}): Promise<Response> {
+  const ctrl = new AbortController();
+  const id = setTimeout(() => ctrl.abort(), FETCH_TIMEOUT_MS);
+  try {
+    const r = await fetch(url, { ...options, signal: ctrl.signal });
+    clearTimeout(id);
+    return r;
+  } catch (e) {
+    clearTimeout(id);
+    if ((e as Error).name === "AbortError") throw new Error("Request timed out. Is the API running?");
+    throw e;
+  }
+}
 
 export type Person = {
   id: number;
@@ -42,19 +57,19 @@ export type EmergencyContact = {
 };
 
 export async function getPeople(): Promise<Person[]> {
-  const r = await fetch(`${API}/people`);
+  const r = await fetchWithTimeout(`${API}/people`);
   if (!r.ok) throw new Error("Failed to fetch people");
   return r.json();
 }
 
 export async function getPeopleForRecognition(): Promise<PersonForRecognition[]> {
-  const r = await fetch(`${API}/people/for-recognition`);
+  const r = await fetchWithTimeout(`${API}/people/for-recognition`);
   if (!r.ok) throw new Error("Failed to fetch people for recognition");
   return r.json();
 }
 
 export async function getPerson(id: number): Promise<Person> {
-  const r = await fetch(`${API}/people/${id}`);
+  const r = await fetchWithTimeout(`${API}/people/${id}`);
   if (!r.ok) throw new Error("Failed to fetch person");
   return r.json();
 }
@@ -95,7 +110,7 @@ export async function deletePerson(id: number): Promise<void> {
 }
 
 export async function getLastConversation(personId: number): Promise<Conversation | null> {
-  const r = await fetch(`${API}/people/${personId}/last-conversation`);
+  const r = await fetchWithTimeout(`${API}/people/${personId}/last-conversation`);
   if (!r.ok) throw new Error("Failed to fetch conversation");
   const data = await r.json();
   return data.id != null ? data : null;
@@ -111,8 +126,21 @@ export async function createConversation(data: { person_id: number; date: string
   return r.json();
 }
 
+export async function summarizeAndSaveConversation(personId: number, transcript: string): Promise<Conversation> {
+  const r = await fetch(`${API}/conversations/summarize-and-save`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ person_id: personId, transcript: transcript.trim() }),
+  });
+  if (!r.ok) {
+    const err = await r.json().catch(() => ({}));
+    throw new Error((err as { detail?: string }).detail || "Failed to summarize and save");
+  }
+  return r.json();
+}
+
 export async function getReminders(): Promise<Reminder[]> {
-  const r = await fetch(`${API}/reminders`);
+  const r = await fetchWithTimeout(`${API}/reminders`);
   if (!r.ok) throw new Error("Failed to fetch reminders");
   return r.json();
 }
@@ -143,7 +171,7 @@ export async function deleteReminder(id: number): Promise<void> {
 }
 
 export async function getEmergencyContacts(): Promise<EmergencyContact[]> {
-  const r = await fetch(`${API}/emergency-contacts`);
+  const r = await fetchWithTimeout(`${API}/emergency-contacts`);
   if (!r.ok) throw new Error("Failed to fetch emergency contacts");
   return r.json();
 }

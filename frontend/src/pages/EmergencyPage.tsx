@@ -5,6 +5,7 @@ import { getEmergencyContacts, createEmergencyContact, type EmergencyContact } f
 export default function EmergencyPage() {
   const [contacts, setContacts] = useState<EmergencyContact[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [addMode, setAddMode] = useState(false);
@@ -12,11 +13,13 @@ export default function EmergencyPage() {
   const [newPhone, setNewPhone] = useState("");
 
   const load = async () => {
+    setLoadError(null);
     try {
       const list = await getEmergencyContacts();
       setContacts(list);
     } catch (_) {
       setContacts([]);
+      setLoadError("Could not load contacts. Is the API running?");
     } finally {
       setLoading(false);
     }
@@ -86,6 +89,15 @@ export default function EmergencyPage() {
   };
 
   if (loading) return <div className="min-h-screen flex items-center justify-center p-6">Loading...</div>;
+  if (loadError) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-teal-50 gap-4">
+        <p className="text-red-700 text-center">{loadError}</p>
+        <button type="button" onClick={() => { setLoading(true); load(); }} className="min-h-touch px-4 py-2 bg-teal-600 text-white rounded-lg font-medium">Try again</button>
+        <Link to="/" className="min-h-touch px-4 py-2 bg-teal-600 text-white rounded-lg font-medium">Home</Link>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-teal-50">
