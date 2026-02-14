@@ -6,10 +6,12 @@ import PersonForm from "./pages/PersonForm";
 import ConversationView from "./pages/ConversationView";
 import RemindersPage from "./pages/RemindersPage";
 import EmergencyPage from "./pages/EmergencyPage";
+import ReminderNotifier from "./ReminderNotifier";
 
 export default function App() {
   return (
     <BrowserRouter>
+      <ReminderNotifier />
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/live" element={<LiveView />} />
