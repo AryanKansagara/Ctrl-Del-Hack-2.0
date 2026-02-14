@@ -3,17 +3,19 @@
 @tailwind utilities;
 
 :root {
-  --color-bg: #f0fdfa;
-  --color-text: #134e4a;
+  --color-bg: #ffffff;
+  --color-text: #1f2937;
   --color-touch: 48px;
+  --recall-mint: #E0FFE0;
 }
 
 body {
   margin: 0;
-  font-family: system-ui, -apple-system, sans-serif;
-  background: var(--color-bg);
+  font-family: "Inter", "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
+  background: radial-gradient(ellipse 80% 60% at 50% 30%, var(--recall-mint) 0%, #f8faf8 45%, #ffffff 100%);
   color: var(--color-text);
   -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
 }
 
 /* Healthcare-friendly: high contrast, large tap targets */

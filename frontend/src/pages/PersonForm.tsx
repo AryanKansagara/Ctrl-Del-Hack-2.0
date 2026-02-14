@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { getPerson, createPerson, updatePerson, type Person } from "../api";
-import { getDescriptorFromImage } from "../faceRecognition";
-import { loadFaceApiModels } from "../faceRecognition";
+import { getDescriptorFromImage, loadFaceApiModels } from "../faceRecognition";
+import { Layout, Card, Button, PageHeading, Input, Textarea } from "../components";
 
 export default function PersonForm() {
   const { id } = useParams<"id">();
@@ -107,73 +107,88 @@ export default function PersonForm() {
     }
   };
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center p-6">Loading...</div>;
+  if (loading) {
+    return (
+      <Layout>
+        <div className="flex-1 flex items-center justify-center p-6">
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
-    <div className="min-h-screen flex flex-col bg-teal-50">
-      <header className="bg-teal-700 text-white px-4 py-3 flex items-center justify-between">
-        <h1 className="text-xl font-bold">{isEdit ? "Edit person" : "Add person"}</h1>
-        <Link to="/people" className="min-h-touch px-4 py-2 bg-teal-600 rounded-lg font-medium">Back</Link>
-      </header>
-
-      <main className="flex-1 p-4 max-w-lg mx-auto w-full">
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {error && <p className="text-red-600 bg-red-50 p-3 rounded-lg">{error}</p>}
-          <div>
-            <label className="block text-teal-900 font-medium mb-1">Name *</label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="w-full min-h-touch px-4 rounded-lg border-2 border-teal-200"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-teal-900 font-medium mb-1">Relationship *</label>
-            <input
-              type="text"
-              value={relationship}
-              onChange={(e) => setRelationship(e.target.value)}
-              placeholder="e.g. Your daughter"
-              className="w-full min-h-touch px-4 rounded-lg border-2 border-teal-200"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-teal-900 font-medium mb-1">About (optional)</label>
-            <textarea
-              value={about}
-              onChange={(e) => setAbout(e.target.value)}
-              rows={2}
-              className="w-full min-h-touch px-4 py-2 rounded-lg border-2 border-teal-200"
-            />
-          </div>
-          <div>
-            <label className="block text-teal-900 font-medium mb-1">Photo * (clear, front-facing)</label>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={onFileChange}
-              className="w-full min-h-touch"
-            />
-            {photoPreview && (
-              <img
-                src={photoPreview}
-                alt="Preview"
-                className="mt-2 w-32 h-32 object-cover rounded-lg border border-teal-200"
-              />
-            )}
-          </div>
-          <button
-            type="submit"
-            disabled={saving}
-            className="w-full min-h-touch py-3 px-4 bg-teal-600 text-white rounded-xl font-semibold disabled:opacity-50"
+    <Layout>
+      <div className="px-6 py-4 max-w-lg mx-auto w-full">
+        <div className="flex items-center justify-between mb-6">
+          <PageHeading>{isEdit ? "Edit person" : "Add person"}</PageHeading>
+          <Link
+            to="/people"
+            className="min-h-touch px-4 py-2 bg-white border border-gray-200 text-gray-800 rounded-card font-medium hover:border-gray-300 transition shadow-card inline-flex items-center justify-center"
           >
-            {saving ? "Saving..." : isEdit ? "Save" : "Add person"}
-          </button>
-        </form>
-      </main>
-    </div>
+            Back
+          </Link>
+        </div>
+
+        <Card>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {error && (
+              <p className="text-red-600 bg-red-50 p-3 rounded-card text-sm">{error}</p>
+            )}
+            <div>
+              <label className="block text-gray-900 font-medium mb-1">Name *</label>
+              <Input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-gray-900 font-medium mb-1">Relationship *</label>
+              <Input
+                type="text"
+                value={relationship}
+                onChange={(e) => setRelationship(e.target.value)}
+                placeholder="e.g. Your daughter"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-gray-900 font-medium mb-1">About (optional)</label>
+              <Textarea
+                value={about}
+                onChange={(e) => setAbout(e.target.value)}
+                rows={2}
+              />
+            </div>
+            <div>
+              <label className="block text-gray-900 font-medium mb-1">Photo * (clear, front-facing)</label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={onFileChange}
+                className="w-full min-h-touch text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-card file:border-0 file:bg-recall-mint file:text-recall-green file:font-medium"
+              />
+              {photoPreview && (
+                <img
+                  src={photoPreview}
+                  alt="Preview"
+                  className="mt-2 w-32 h-32 object-cover rounded-card border border-gray-200"
+                />
+              )}
+            </div>
+            <Button
+              type="submit"
+              disabled={saving}
+              variant="primary"
+              className="w-full"
+            >
+              {saving ? "Saving..." : isEdit ? "Save" : "Add person"}
+            </Button>
+          </form>
+        </Card>
+      </div>
+    </Layout>
   );
 }

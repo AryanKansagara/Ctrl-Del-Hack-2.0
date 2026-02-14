@@ -95,18 +95,18 @@ export default function ReminderNotifier() {
 
   return (
     <div
-      className="fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:max-w-sm z-50 bg-teal-800 text-white rounded-xl shadow-lg p-4 flex items-center justify-between gap-4"
+      className="fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:max-w-sm z-50 bg-white rounded-card shadow-card border border-gray-200 p-4 flex items-center justify-between gap-4"
       role="alert"
     >
       <div>
-        <p className="font-semibold">Reminder</p>
-        <p className="text-teal-200">{activeReminder.label}</p>
-        <p className="text-teal-300 text-sm mt-1">{activeReminder.time}</p>
+        <p className="font-semibold text-gray-900">Reminder</p>
+        <p className="text-gray-700">{activeReminder.label}</p>
+        <p className="text-gray-500 text-sm mt-1">{activeReminder.time}</p>
       </div>
       <button
         type="button"
         onClick={() => setActiveReminder(null)}
-        className="min-h-touch px-4 py-2 bg-teal-600 hover:bg-teal-500 rounded-lg font-medium shrink-0"
+        className="min-h-touch px-4 py-2 bg-recall-green hover:bg-recall-greenDark text-white rounded-card font-medium shrink-0 transition"
       >
         OK
       </button>

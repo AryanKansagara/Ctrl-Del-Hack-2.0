@@ -3,6 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { getPerson, getLastConversation, createConversation } from "../api";
 import type { Person } from "../api";
 import type { Conversation } from "../api";
+import { Layout, Card, Button, PageHeading, Input, Textarea } from "../components";
 
 export default function ConversationView() {
   const { personId } = useParams<"personId">();
@@ -50,76 +51,101 @@ export default function ConversationView() {
     }
   };
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center p-6">Loading...</div>;
-  if (error && !person) {
+  if (loading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-6 gap-4">
-        <p className="text-red-700 text-center">{error}</p>
-        <button type="button" onClick={load} className="min-h-touch px-4 py-2 bg-teal-600 text-white rounded-lg font-medium">Try again</button>
-        <Link to="/people" className="min-h-touch px-4 py-2 bg-teal-600 text-white rounded-lg font-medium">Back to People</Link>
-      </div>
+      <Layout>
+        <div className="flex-1 flex items-center justify-center p-6">
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </Layout>
     );
   }
-  if (error || !person) return <div className="min-h-screen flex flex-col items-center justify-center p-6 text-red-700">{error || "Not found"}</div>;
+
+  if (error && !person) {
+    return (
+      <Layout>
+        <div className="flex-1 flex flex-col items-center justify-center p-6 gap-4">
+          <Card className="max-w-md text-center">
+            <p className="text-red-600 mb-4">{error}</p>
+            <div className="flex flex-col sm:flex-row gap-2 justify-center">
+              <Button variant="primary" onClick={load}>Try again</Button>
+              <Link to="/people" className="min-h-touch px-4 py-2 bg-white border border-gray-200 text-gray-800 rounded-card font-medium hover:border-gray-300 transition shadow-card inline-flex items-center justify-center">Back to People</Link>
+            </div>
+          </Card>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (error || !person) {
+    return (
+      <Layout>
+        <div className="flex-1 flex items-center justify-center p-6">
+          <p className="text-red-600">{error || "Not found"}</p>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
-    <div className="min-h-screen flex flex-col bg-teal-50">
-      <header className="bg-teal-700 text-white px-4 py-3 flex items-center justify-between">
-        <h1 className="text-xl font-bold">Last conversation</h1>
-        <Link to="/live" className="min-h-touch px-4 py-2 bg-teal-600 rounded-lg font-medium">Back to camera</Link>
-      </header>
-
-      <main className="flex-1 p-4 max-w-lg mx-auto w-full">
-        <div className="bg-white rounded-xl p-4 shadow mb-4">
-          <p className="font-semibold text-teal-900 text-lg">{person.name}</p>
-          <p className="text-teal-600">{person.relationship}</p>
+    <Layout>
+      <div className="px-6 py-4 max-w-lg mx-auto w-full">
+        <div className="flex items-center justify-between mb-6">
+          <PageHeading>Last conversation</PageHeading>
+          <Link
+            to="/live"
+            className="min-h-touch px-4 py-2 bg-white border border-gray-200 text-gray-800 rounded-card font-medium hover:border-gray-300 transition shadow-card inline-flex items-center justify-center"
+          >
+            Back to camera
+          </Link>
         </div>
 
+        <Card className="mb-4">
+          <p className="font-semibold text-gray-900 text-lg">{person.name}</p>
+          <p className="text-gray-600">{person.relationship}</p>
+        </Card>
+
         {conversation ? (
-          <div className="bg-white rounded-xl p-4 shadow">
-            <p className="text-teal-600 text-sm mb-1">Date: {conversation.date}</p>
-            <p className="text-teal-900 whitespace-pre-wrap">{conversation.summary}</p>
-          </div>
+          <Card className="mb-4">
+            <p className="text-gray-600 text-sm mb-1">Date: {conversation.date}</p>
+            <p className="text-gray-900 whitespace-pre-wrap">{conversation.summary}</p>
+          </Card>
         ) : (
-          <p className="text-teal-700 py-4">No conversation yet.</p>
+          <p className="text-gray-600 py-4">No conversation yet.</p>
         )}
 
         {addMode ? (
-          <form onSubmit={handleAddConversation} className="mt-4 space-y-3">
-            <div>
-              <label className="block font-medium mb-1">Date</label>
-              <input
-                type="date"
-                value={newDate}
-                onChange={(e) => setNewDate(e.target.value)}
-                className="w-full min-h-touch px-4 rounded-lg border-2 border-teal-200"
-              />
-            </div>
-            <div>
-              <label className="block font-medium mb-1">Summary</label>
-              <textarea
-                value={newSummary}
-                onChange={(e) => setNewSummary(e.target.value)}
-                rows={4}
-                className="w-full min-h-touch px-4 py-2 rounded-lg border-2 border-teal-200"
-                required
-              />
-            </div>
-            <div className="flex gap-2">
-              <button type="submit" disabled={saving} className="min-h-touch px-4 py-2 bg-teal-600 text-white rounded-lg font-medium disabled:opacity-50">Save</button>
-              <button type="button" onClick={() => setAddMode(false)} className="min-h-touch px-4 py-2 bg-gray-200 rounded-lg font-medium">Cancel</button>
-            </div>
-          </form>
+          <Card>
+            <form onSubmit={handleAddConversation} className="space-y-4">
+              <div>
+                <label className="block text-gray-900 font-medium mb-1">Date</label>
+                <Input
+                  type="date"
+                  value={newDate}
+                  onChange={(e) => setNewDate(e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="block text-gray-900 font-medium mb-1">Summary</label>
+                <Textarea
+                  value={newSummary}
+                  onChange={(e) => setNewSummary(e.target.value)}
+                  rows={4}
+                  required
+                />
+              </div>
+              <div className="flex gap-2">
+                <Button type="submit" variant="primary" disabled={saving}>Save</Button>
+                <Button type="button" variant="secondary" onClick={() => setAddMode(false)}>Cancel</Button>
+              </div>
+            </form>
+          </Card>
         ) : (
-          <button
-            type="button"
-            onClick={() => setAddMode(true)}
-            className="mt-4 min-h-touch px-4 py-2 bg-teal-100 text-teal-800 rounded-lg font-medium"
-          >
+          <Button variant="ghost" onClick={() => setAddMode(true)}>
             Add conversation
-          </button>
+          </Button>
         )}
-      </main>
-    </div>
+      </div>
+    </Layout>
   );
 }

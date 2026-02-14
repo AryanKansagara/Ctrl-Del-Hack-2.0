@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { getEmergencyContacts, createEmergencyContact, type EmergencyContact } from "../api";
+import { Layout, Card, Button, PageHeading, Input } from "../components";
 
 export default function EmergencyPage() {
   const [contacts, setContacts] = useState<EmergencyContact[]>([]);
@@ -88,60 +89,72 @@ export default function EmergencyPage() {
     }
   };
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center p-6">Loading...</div>;
+  if (loading) {
+    return (
+      <Layout>
+        <div className="flex-1 flex items-center justify-center p-6">
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </Layout>
+    );
+  }
+
   if (loadError) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-teal-50 gap-4">
-        <p className="text-red-700 text-center">{loadError}</p>
-        <button type="button" onClick={() => { setLoading(true); load(); }} className="min-h-touch px-4 py-2 bg-teal-600 text-white rounded-lg font-medium">Try again</button>
-        <Link to="/" className="min-h-touch px-4 py-2 bg-teal-600 text-white rounded-lg font-medium">Home</Link>
-      </div>
+      <Layout>
+        <div className="flex-1 flex flex-col items-center justify-center p-6 gap-4">
+          <Card className="max-w-md text-center">
+            <p className="text-red-600 mb-4">{loadError}</p>
+            <div className="flex flex-col sm:flex-row gap-2 justify-center">
+              <Button variant="primary" onClick={() => { setLoading(true); load(); }}>Try again</Button>
+              <Link to="/" className="min-h-touch px-4 py-2 bg-white border border-gray-200 text-gray-800 rounded-card font-medium hover:border-gray-300 transition shadow-card inline-flex items-center justify-center">Home</Link>
+            </div>
+          </Card>
+        </div>
+      </Layout>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-teal-50">
-      <header className="bg-teal-700 text-white px-4 py-3 flex items-center justify-between">
-        <h1 className="text-xl font-bold">Emergency</h1>
-        <Link to="/" className="min-h-touch px-4 py-2 bg-teal-600 rounded-lg font-medium">Home</Link>
-      </header>
+    <Layout>
+      <div className="flex-1 p-6 flex flex-col items-center gap-6 max-w-lg mx-auto w-full">
+        <PageHeading>Emergency</PageHeading>
 
-      <main className="flex-1 p-6 flex flex-col items-center justify-center gap-6 max-w-lg mx-auto">
         {contacts.length === 0 && !addMode ? (
-          <div className="text-center space-y-4">
-            <p className="text-teal-800">No emergency contact. Add one below.</p>
-            <button type="button" onClick={() => setAddMode(true)} className="min-h-touch px-6 py-3 bg-teal-600 text-white rounded-xl font-semibold">Add emergency contact</button>
-          </div>
+          <Card className="w-full text-center">
+            <p className="text-gray-600 mb-4">No emergency contact. Add one below.</p>
+            <Button variant="primary" onClick={() => setAddMode(true)} className="w-full">
+              Add emergency contact
+            </Button>
+          </Card>
         ) : addMode ? (
-          <form onSubmit={handleAddContact} className="w-full max-w-sm space-y-3 p-4 bg-white rounded-xl shadow">
-            <input type="text" value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Name" className="w-full min-h-touch px-4 rounded-lg border-2 border-teal-200" required />
-            <input type="tel" value={newPhone} onChange={(e) => setNewPhone(e.target.value)} placeholder="Phone" className="w-full min-h-touch px-4 rounded-lg border-2 border-teal-200" required />
-            <div className="flex gap-2">
-              <button type="submit" className="min-h-touch px-4 py-2 bg-teal-600 text-white rounded-lg font-medium">Save</button>
-              <button type="button" onClick={() => setAddMode(false)} className="min-h-touch px-4 py-2 bg-gray-200 rounded-lg font-medium">Cancel</button>
-            </div>
-          </form>
+          <Card className="w-full max-w-sm">
+            <form onSubmit={handleAddContact} className="space-y-4">
+              <Input type="text" value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Name" required />
+              <Input type="tel" value={newPhone} onChange={(e) => setNewPhone(e.target.value)} placeholder="Phone" required />
+              <div className="flex gap-2">
+                <Button type="submit" variant="primary">Save</Button>
+                <Button type="button" variant="secondary" onClick={() => setAddMode(false)}>Cancel</Button>
+              </div>
+            </form>
+          </Card>
         ) : (
           <>
-            <button
-              type="button"
-              onClick={handleCall}
-              className="w-full max-w-sm min-h-[72px] py-4 px-6 bg-emergency text-white rounded-2xl font-bold text-xl shadow-lg hover:bg-red-600 transition"
-            >
+            <Button variant="emergency" onClick={handleCall} className="w-full max-w-sm min-h-[72px]">
               Call {primary?.name ?? "emergency"}
-            </button>
-            <button
-              type="button"
-              onClick={handleShare}
-              className="w-full max-w-sm min-h-touch py-4 px-6 bg-teal-600 text-white rounded-2xl font-semibold shadow hover:bg-teal-500 transition"
-            >
+            </Button>
+            <Button variant="secondary" onClick={handleShare} className="w-full max-w-sm min-h-touch py-4 text-lg bg-gray-600 border-gray-600 hover:bg-gray-700 hover:border-gray-700 !text-white">
               Share my location
-            </button>
+            </Button>
             {locationError && <p className="text-red-600 text-sm text-center">{locationError}</p>}
-            {mapUrl && <a href={mapUrl} target="_blank" rel="noopener noreferrer" className="text-teal-600 underline text-sm">Open location in maps</a>}
+            {mapUrl && (
+              <a href={mapUrl} target="_blank" rel="noopener noreferrer" className="text-recall-green hover:underline text-sm font-medium">
+                Open location in maps
+              </a>
+            )}
           </>
         )}
-      </main>
-    </div>
+      </div>
+    </Layout>
   );
 }

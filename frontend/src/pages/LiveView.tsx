@@ -8,6 +8,7 @@ import {
   type FaceMatch,
   type DetectionResult,
 } from "../faceRecognition";
+import { Layout, Card, Button } from "../components";
 
 const FPS = 3;
 const MAX_TRANSCRIPT_LEN = 6000;
@@ -36,17 +37,37 @@ function saveLastSaved(data: LastSavedConversation) {
   } catch (_) {}
 }
 
+// Web Speech API types (not in all TS libs)
+interface SpeechRecognitionEvent extends Event {
+  resultIndex: number;
+  results: SpeechRecognitionResultList;
+}
+interface SpeechRecognitionErrorEvent extends Event {
+  error: string;
+  message?: string;
+}
+interface SpeechRecognitionInstance extends EventTarget {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  onresult: ((e: SpeechRecognitionEvent) => void) | null;
+  onerror: ((e: SpeechRecognitionErrorEvent) => void) | null;
+  onend: (() => void) | null;
+  start(): void;
+  abort(): void;
+}
 declare global {
   interface Window {
-    SpeechRecognition?: typeof SpeechRecognition;
-    webkitSpeechRecognition?: typeof SpeechRecognition;
+    SpeechRecognition?: new () => SpeechRecognitionInstance;
+    webkitSpeechRecognition?: new () => SpeechRecognitionInstance;
   }
+  const SpeechRecognition: new () => SpeechRecognitionInstance | undefined;
 }
 
 export default function LiveView() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const recognitionRef = useRef<InstanceType<Window["SpeechRecognition"]> | null>(null);
+  const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
   const transcriptBufferRef = useRef<string>("");
   const listeningActiveRef = useRef(true);
 
@@ -259,137 +280,132 @@ export default function LiveView() {
 
   if (error) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-teal-50">
-        <p className="text-lg text-teal-900 mb-4 text-center">{error}</p>
-        <a href="/" className="min-h-touch min-w-touch px-6 py-3 bg-teal-600 text-white rounded-lg font-semibold">
-          Back
-        </a>
-      </div>
+      <Layout>
+        <div className="flex-1 flex flex-col items-center justify-center p-6 gap-4">
+          <Card className="max-w-md text-center">
+            <p className="text-gray-900 mb-4">{error}</p>
+            <a
+              href="/"
+              className="min-h-touch px-4 py-2 bg-recall-green text-white rounded-card font-medium hover:bg-recall-greenDark transition inline-flex items-center justify-center"
+            >
+              Back to Recall
+            </a>
+          </Card>
+        </div>
+      </Layout>
     );
   }
 
   if (!modelsReady) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-teal-50">
-        <p className="text-lg text-teal-900">Loading face recognition...</p>
-      </div>
+      <Layout>
+        <div className="flex-1 flex items-center justify-center p-6">
+          <p className="text-gray-600">Loading face recognition...</p>
+        </div>
+      </Layout>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-teal-50">
-      <header className="bg-teal-700 text-white px-4 py-3 flex items-center justify-between">
-        <h1 className="text-xl font-bold">Who is this?</h1>
-        <a
-          href="/"
-          className="min-h-touch min-w-touch px-4 py-2 bg-teal-600 rounded-lg font-medium"
-        >
-          Home
-        </a>
-      </header>
-
-      <main className="flex-1 relative flex flex-col justify-center items-center p-4 gap-4">
+    <Layout>
+      <div className="flex-1 min-h-0 overflow-y-auto flex flex-col items-center p-4 gap-4">
         <div className="w-full max-w-5xl flex flex-col lg:flex-row gap-4 items-start justify-center">
+          {/* Left column: video + listening card */}
           <div className="w-full max-w-2xl flex-shrink-0">
-        <div
-          className="relative rounded-xl overflow-hidden shadow-xl bg-black max-w-2xl w-full cursor-pointer"
-          onClick={handleAreaClick}
-          role="img"
-          aria-label="Live camera with face labels. Tap a face to save conversation and see last conversation."
-        >
-          <video
-            ref={videoRef}
-            autoPlay
-            playsInline
-            muted
-            className="w-full h-auto block"
-          />
-          <canvas
-            ref={canvasRef}
-            className="absolute top-0 left-0 w-full h-full pointer-events-none"
-            style={{ width: "100%", height: "auto" }}
-          />
-        </div>
+            <div
+              className="relative rounded-card overflow-hidden shadow-card bg-black max-w-2xl w-full cursor-pointer border border-gray-200"
+              onClick={handleAreaClick}
+              role="img"
+              aria-label="Live camera with face labels. Tap a face to save conversation and see last conversation."
+            >
+              <video
+                ref={videoRef}
+                autoPlay
+                playsInline
+                muted
+                className="w-full h-auto block"
+              />
+              <canvas
+                ref={canvasRef}
+                className="absolute top-0 left-0 w-full h-full pointer-events-none"
+                style={{ width: "100%", height: "auto" }}
+              />
+            </div>
 
-        {/* Listening: button to turn on, then transcript bar */}
-        <div className="w-full mt-3 p-3 bg-white rounded-xl shadow border border-teal-100">
-          {!listeningRequested ? (
-            <div className="flex flex-col gap-2">
-              <p className="text-teal-700 text-sm">Press the button when you want to capture conversation, then tap a face to save it for that person.</p>
-              <button
-                type="button"
-                onClick={() => setListeningRequested(true)}
-                className="min-h-touch px-4 py-2 bg-teal-600 text-white rounded-lg font-medium w-full"
-              >
-                Start listening for conversation
-              </button>
-            </div>
-          ) : speechError ? (
-            <div className="flex flex-col gap-2">
-              <p className="text-amber-700 text-sm">{speechError}</p>
-              <button
-                type="button"
-                onClick={() => { setSpeechError(null); setListeningRequested(false); }}
-                className="min-h-touch px-4 py-2 bg-gray-200 rounded-lg font-medium"
-              >
-                Turn off
-              </button>
-            </div>
-          ) : (
-            <>
-              <div className="flex items-center justify-between gap-2 mb-2">
-                <span className="text-teal-700 text-sm font-medium flex items-center gap-2">
-                  <span className={`w-2 h-2 rounded-full ${listening ? "bg-green-500 animate-pulse" : "bg-gray-300"}`} />
-                  {listening ? "Listening…" : "Starting…"}
-                </span>
-                <div className="flex gap-2">
-                  {transcript.length > 0 && (
-                    <button type="button" onClick={clearTranscript} className="text-sm text-teal-600 hover:underline">Clear</button>
-                  )}
+            <Card className="w-full mt-3 p-4">
+              {!listeningRequested ? (
+                <div className="flex flex-col gap-2">
+                  <p className="text-gray-600 text-sm">Press the button when you want to capture conversation, then tap a face to save it for that person.</p>
                   <button
                     type="button"
-                    onClick={() => setListeningRequested(false)}
-                    className="text-sm text-teal-600 hover:underline font-medium"
+                    onClick={() => setListeningRequested(true)}
+                    className="text-sm text-gray-600 hover:underline font-medium min-h-touch"
                   >
-                    Stop listening
+                    Start listening for conversation
                   </button>
                 </div>
-              </div>
-              {transcript.length > 0 && (
-                <p className="text-teal-900 text-sm line-clamp-2 break-words">
-                  {transcript.slice(-400)}
-                </p>
+              ) : speechError ? (
+                <div className="flex flex-col gap-2">
+                  <p className="text-amber-700 text-sm">{speechError}</p>
+                  <Button variant="secondary" onClick={() => { setSpeechError(null); setListeningRequested(false); }}>
+                    Turn off
+                  </Button>
+                </div>
+              ) : (
+                <>
+                  <div className="flex items-center justify-between gap-2 mb-2">
+                    <span className="text-gray-700 text-sm font-medium flex items-center gap-2">
+                      <span className={`w-2 h-2 rounded-full ${listening ? "bg-green-500 animate-pulse" : "bg-gray-300"}`} />
+                      {listening ? "Listening…" : "Starting…"}
+                    </span>
+                    <div className="flex gap-2">
+                      {transcript.length > 0 && (
+                        <button type="button" onClick={clearTranscript} className="text-sm text-recall-green hover:underline font-medium">Clear</button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => setListeningRequested(false)}
+                        className="text-sm text-gray-600 hover:underline font-medium"
+                      >
+                        Stop listening
+                      </button>
+                    </div>
+                  </div>
+                  {transcript.length > 0 && (
+                    <p className="text-gray-900 text-sm line-clamp-2 break-words">
+                      {transcript.slice(-400)}
+                    </p>
+                  )}
+                  <p className="text-gray-500 text-xs mt-1">
+                    Tap a face to summarize this conversation and save it as their last conversation.
+                  </p>
+                </>
               )}
-              <p className="text-teal-500 text-xs mt-1">
-                Tap a face to summarize this conversation and save it as their last conversation.
-              </p>
-            </>
-          )}
-        </div>
+            </Card>
           </div>
 
-          {/* Last conversation saved — shown in the white space */}
+          {/* Right column: Last conversation saved */}
           {lastSaved && (
-            <div className="w-full max-w-md flex-shrink-0 bg-white rounded-xl shadow-lg border-2 border-teal-200 p-4">
-              <h2 className="text-teal-800 font-semibold text-sm uppercase tracking-wide mb-2">Last conversation saved</h2>
-              <p className="font-semibold text-teal-900">{lastSaved.personName}</p>
-              <p className="text-teal-600 text-xs mb-2">{lastSaved.date}</p>
-              <p className="text-teal-800 text-sm whitespace-pre-wrap mb-4">{lastSaved.summary}</p>
+            <Card className="w-full max-w-md flex-shrink-0 p-4">
+              <h2 className="text-gray-800 font-semibold text-sm uppercase tracking-wide mb-2">Last conversation saved</h2>
+              <p className="font-semibold text-gray-900">{lastSaved.personName}</p>
+              <p className="text-gray-600 text-xs mb-2">{lastSaved.date}</p>
+              <p className="text-gray-800 text-sm whitespace-pre-wrap mb-4">{lastSaved.summary}</p>
               <button
                 type="button"
                 onClick={() => navigate(`/conversation/${lastSaved.personId}`)}
-                className="min-h-touch w-full px-4 py-2 bg-teal-600 text-white rounded-lg font-medium"
+                className="text-sm text-gray-600 hover:underline font-medium min-h-touch"
               >
                 View conversation
               </button>
-            </div>
+            </Card>
           )}
         </div>
 
         {saving && (
-          <p className="text-teal-700 text-sm">Saving and summarizing…</p>
+          <p className="text-gray-600 text-sm">Saving and summarizing…</p>
         )}
-      </main>
-    </div>
+      </div>
+    </Layout>
   );
 }

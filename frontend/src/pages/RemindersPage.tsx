@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { getReminders, createReminder, updateReminder, deleteReminder, type Reminder } from "../api";
+import { Layout, Card, Button, PageHeading, Input } from "../components";
 
 export default function RemindersPage() {
   const [reminders, setReminders] = useState<Reminder[]>([]);
@@ -58,88 +59,90 @@ export default function RemindersPage() {
     } catch (_) {}
   };
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center p-6">Loading...</div>;
+  if (loading) {
+    return (
+      <Layout>
+        <div className="flex-1 flex items-center justify-center p-6">
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </Layout>
+    );
+  }
+
   if (loadError) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-teal-50 gap-4">
-        <p className="text-red-700 text-center">{loadError}</p>
-        <button type="button" onClick={() => { setLoading(true); load(); }} className="min-h-touch px-4 py-2 bg-teal-600 text-white rounded-lg font-medium">Try again</button>
-        <Link to="/" className="min-h-touch px-4 py-2 bg-teal-600 text-white rounded-lg font-medium">Home</Link>
-      </div>
+      <Layout>
+        <div className="flex-1 flex flex-col items-center justify-center p-6 gap-4">
+          <Card className="max-w-md text-center">
+            <p className="text-red-600 mb-4">{loadError}</p>
+            <div className="flex flex-col sm:flex-row gap-2 justify-center">
+              <Button variant="primary" onClick={() => { setLoading(true); load(); }}>Try again</Button>
+              <Link to="/" className="min-h-touch px-4 py-2 bg-white border border-gray-200 text-gray-800 rounded-card font-medium hover:border-gray-300 transition shadow-card inline-flex items-center justify-center">Home</Link>
+            </div>
+          </Card>
+        </div>
+      </Layout>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-teal-50">
-      <header className="bg-teal-700 text-white px-4 py-3 flex items-center justify-between">
-        <h1 className="text-xl font-bold">Reminders</h1>
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={() => setAddMode(true)}
-            className="min-h-touch px-4 py-2 bg-teal-600 rounded-lg font-medium"
-          >
-            Add
-          </button>
-          <Link to="/" className="min-h-touch px-4 py-2 bg-teal-600 rounded-lg font-medium">Home</Link>
+    <Layout>
+      <div className="px-6 py-4 max-w-2xl mx-auto w-full">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+          <PageHeading>Reminders</PageHeading>
+          <div className="flex gap-2">
+            <Button variant="secondary" onClick={() => setAddMode(true)} className="bg-gray-600 border-gray-600 hover:bg-gray-700 hover:border-gray-700 !text-white">Add</Button>
+          </div>
         </div>
-      </header>
 
-      <main className="flex-1 p-4 max-w-lg mx-auto w-full">
         {addMode && (
-          <form onSubmit={handleAdd} className="mb-6 p-4 bg-white rounded-xl shadow space-y-3">
-            <input
-              type="text"
-              value={label}
-              onChange={(e) => setLabel(e.target.value)}
-              placeholder="e.g. Morning medicine"
-              className="w-full min-h-touch px-4 rounded-lg border-2 border-teal-200"
-              required
-            />
-            <input
-              type="time"
-              value={time}
-              onChange={(e) => setTime(e.target.value)}
-              className="w-full min-h-touch px-4 rounded-lg border-2 border-teal-200"
-            />
-            <div className="flex gap-2">
-              <button type="submit" disabled={saving} className="min-h-touch px-4 py-2 bg-teal-600 text-white rounded-lg font-medium disabled:opacity-50">Save</button>
-              <button type="button" onClick={() => setAddMode(false)} className="min-h-touch px-4 py-2 bg-gray-200 rounded-lg font-medium">Cancel</button>
-            </div>
-          </form>
+          <Card className="mb-6">
+            <form onSubmit={handleAdd} className="space-y-4">
+              <Input
+                type="text"
+                value={label}
+                onChange={(e) => setLabel(e.target.value)}
+                placeholder="e.g. Morning medicine"
+                required
+              />
+              <Input
+                type="time"
+                value={time}
+                onChange={(e) => setTime(e.target.value)}
+              />
+              <div className="flex gap-2">
+                <Button type="submit" variant="primary" disabled={saving}>Save</Button>
+                <Button type="button" variant="secondary" onClick={() => setAddMode(false)}>Cancel</Button>
+              </div>
+            </form>
+          </Card>
         )}
 
         {reminders.length === 0 && !addMode ? (
-          <p className="text-teal-800 py-8 text-center">No reminders. Add one to get started.</p>
+          <Card>
+            <p className="text-gray-600 text-center py-8">No reminders. Add one to get started.</p>
+          </Card>
         ) : (
-          <ul className="space-y-3">
+          <ul className="space-y-4">
             {reminders.map((r) => (
-              <li key={r.id} className="bg-white rounded-xl p-4 shadow flex items-center justify-between gap-4">
-                <div>
-                  <p className={`font-semibold ${r.enabled ? "text-teal-900" : "text-gray-400"}`}>{r.label}</p>
-                  <p className="text-teal-600 text-sm">{r.time} · {r.repeat_rule}</p>
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => toggleEnabled(r)}
-                    className="min-h-touch px-3 py-2 bg-teal-100 text-teal-800 rounded-lg font-medium"
-                  >
-                    {r.enabled ? "On" : "Off"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleDelete(r.id)}
-                    className="min-h-touch px-3 py-2 bg-red-100 text-red-700 rounded-lg font-medium"
-                  >
-                    Delete
-                  </button>
-                </div>
+              <li key={r.id}>
+                <Card className="p-4 flex flex-row items-center justify-between gap-4">
+                  <div>
+                    <p className={`font-semibold ${r.enabled ? "text-gray-900" : "text-gray-400"}`}>{r.label}</p>
+                    <p className="text-gray-600 text-sm">{r.time} · {r.repeat_rule}</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button variant="ghost" onClick={() => toggleEnabled(r)}>
+                      {r.enabled ? "On" : "Off"}
+                    </Button>
+                    <Button variant="danger" onClick={() => handleDelete(r.id)}>Delete</Button>
+                  </div>
+                </Card>
               </li>
             ))}
           </ul>
         )}
-      </main>
-    </div>
+      </div>
+    </Layout>
   );
 }
