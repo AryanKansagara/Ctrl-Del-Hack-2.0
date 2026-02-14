@@ -7,9 +7,10 @@ services:
       - "8000:8000"
     volumes:
       - ./backend:/app
+    env_file:
+      - ./backend/.env
     environment:
       - PYTHONUNBUFFERED=1
-      - GROQ_API_KEY=${GROQ_API_KEY:-}
 
   frontend:
     build:

@@ -144,17 +144,30 @@ export default function LiveView() {
     rec.interimResults = true;
     rec.lang = "en-US";
     rec.onresult = (e: SpeechRecognitionEvent) => {
-      let chunk = "";
+      // Only process final results to avoid duplicates
+      let finalTranscript = "";
+      let interimTranscript = "";
+      
       for (let i = e.resultIndex; i < e.results.length; i++) {
-        chunk += e.results[i][0].transcript;
+        const transcript = e.results[i][0].transcript;
+        if (e.results[i].isFinal) {
+          finalTranscript += transcript + " ";
+        } else {
+          interimTranscript += transcript;
+        }
       }
-      if (chunk) {
-        transcriptBufferRef.current += chunk;
+      
+      // Only append final results to buffer to avoid duplicates
+      if (finalTranscript) {
+        transcriptBufferRef.current += finalTranscript;
         if (transcriptBufferRef.current.length > MAX_TRANSCRIPT_LEN) {
           transcriptBufferRef.current = transcriptBufferRef.current.slice(-MAX_TRANSCRIPT_LEN);
         }
-        setTranscript(transcriptBufferRef.current);
       }
+      
+      // Show final + interim for live feedback
+      const displayText = transcriptBufferRef.current + interimTranscript;
+      setTranscript(displayText);
     };
     rec.onerror = (e: SpeechRecognitionErrorEvent) => {
       if (e.error === "not-allowed") setSpeechError("Microphone access denied.");
