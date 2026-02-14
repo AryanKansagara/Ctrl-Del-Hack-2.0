@@ -6,11 +6,14 @@ import * as faceApi from "face-api.js";
 import type { PersonForRecognition } from "./api";
 
 const MODEL_URL = "https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@0.22.2/weights";
+// Larger inputSize (416) helps detect smaller/distant faces (e.g. on a phone screen).
+// Lower scoreThreshold (0.3) keeps detections that would otherwise be dropped.
 const DETECTION_OPTIONS = new faceApi.TinyFaceDetectorOptions({
-  inputSize: 224,
-  scoreThreshold: 0.5,
+  inputSize: 416,
+  scoreThreshold: 0.3,
 });
-const MATCH_THRESHOLD = 0.6;
+// Slightly relaxed so different angles/lighting (e.g. from a screen) still match.
+const MATCH_THRESHOLD = 0.65;
 
 let modelsLoaded = false;
 
@@ -72,8 +75,13 @@ function findBestMatch(
   return best;
 }
 
+export type UnknownFace = {
+  box: { x: number; y: number; width: number; height: number };
+};
+
 export type DetectionResult = {
   matches: FaceMatch[];
+  unknownFaces: UnknownFace[];
   unknownCount: number;
 };
 
@@ -91,7 +99,7 @@ export async function detectAndMatch(
     .withFaceDescriptors();
 
   const matches: FaceMatch[] = [];
-  let unknownCount = 0;
+  const unknownFaces: UnknownFace[] = [];
 
   for (const det of detections) {
     const box = det.detection.box;
@@ -104,11 +112,17 @@ export async function detectAndMatch(
         box: { x: box.x, y: box.y, width: box.width, height: box.height },
       });
     } else {
-      unknownCount++;
+      unknownFaces.push({
+        box: { x: box.x, y: box.y, width: box.width, height: box.height },
+      });
     }
   }
 
-  return { matches, unknownCount };
+  return {
+    matches,
+    unknownFaces,
+    unknownCount: unknownFaces.length,
+  };
 }
 
 /**

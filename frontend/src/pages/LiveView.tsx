@@ -92,6 +92,18 @@ export default function LiveView() {
           ctx.fillStyle = "#fff";
           ctx.fillText(label, m.box.x + 6, m.box.y - 10);
         }
+        for (const u of result.unknownFaces) {
+          ctx.strokeStyle = "#64748b";
+          ctx.lineWidth = 2;
+          ctx.strokeRect(u.box.x, u.box.y, u.box.width, u.box.height);
+          ctx.fillStyle = "rgba(100, 116, 139, 0.8)";
+          ctx.font = "bold 14px system-ui, sans-serif";
+          const label = "Unknown";
+          const tw = ctx.measureText(label).width;
+          ctx.fillRect(u.box.x, u.box.y - 24, tw + 10, 20);
+          ctx.fillStyle = "#fff";
+          ctx.fillText(label, u.box.x + 5, u.box.y - 8);
+        }
       }
     } catch (_) {
       // ignore single-frame errors
