@@ -1,0 +1,1 @@
+{"root":["./src/app.tsx","./src/api.ts","./src/face-api.d.ts","./src/facerecognition.ts","./src/main.tsx","./src/vite-env.d.ts","./src/pages/conversationview.tsx","./src/pages/emergencypage.tsx","./src/pages/home.tsx","./src/pages/liveview.tsx","./src/pages/peoplelist.tsx","./src/pages/personform.tsx","./src/pages/reminderspage.tsx"],"version":"5.6.3"}

@@ -1,0 +1,23 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-bg: #f0fdfa;
+  --color-text: #134e4a;
+  --color-touch: 48px;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, sans-serif;
+  background: var(--color-bg);
+  color: var(--color-text);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Healthcare-friendly: high contrast, large tap targets */
+button, a, [role="button"] {
+  min-height: var(--color-touch);
+  min-width: var(--color-touch);
+}

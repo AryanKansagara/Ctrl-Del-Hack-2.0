@@ -1,0 +1,25 @@
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import Home from "./pages/Home";
+import LiveView from "./pages/LiveView";
+import PeopleList from "./pages/PeopleList";
+import PersonForm from "./pages/PersonForm";
+import ConversationView from "./pages/ConversationView";
+import RemindersPage from "./pages/RemindersPage";
+import EmergencyPage from "./pages/EmergencyPage";
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/live" element={<LiveView />} />
+        <Route path="/people" element={<PeopleList />} />
+        <Route path="/people/new" element={<PersonForm />} />
+        <Route path="/people/:id/edit" element={<PersonForm />} />
+        <Route path="/conversation/:personId" element={<ConversationView />} />
+        <Route path="/reminders" element={<RemindersPage />} />
+        <Route path="/emergency" element={<EmergencyPage />} />
+      </Routes>
+    </BrowserRouter>
+  );
+}
