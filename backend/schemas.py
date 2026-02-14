@@ -62,6 +62,11 @@ class ConversationResponse(ConversationBase):
         from_attributes = True
 
 
+class SummarizeAndSaveRequest(BaseModel):
+    person_id: int
+    transcript: str = ""  # raw speech-to-text; can be long, backend will trim
+
+
 class ReminderBase(BaseModel):
     label: str = Field(..., min_length=1, max_length=255)
     time: str = Field(..., pattern=r"^\d{1,2}:\d{2}$")  # H:MM or HH:MM

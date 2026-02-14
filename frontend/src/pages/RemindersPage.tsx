@@ -5,17 +5,20 @@ import { getReminders, createReminder, updateReminder, deleteReminder, type Remi
 export default function RemindersPage() {
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [addMode, setAddMode] = useState(false);
   const [label, setLabel] = useState("");
   const [time, setTime] = useState("09:00");
   const [saving, setSaving] = useState(false);
 
   const load = async () => {
+    setLoadError(null);
     try {
       const list = await getReminders();
       setReminders(list);
-    } catch (_) {
+    } catch (e) {
       setReminders([]);
+      setLoadError("Could not load reminders. Is the API running?");
     } finally {
       setLoading(false);
     }
@@ -56,6 +59,15 @@ export default function RemindersPage() {
   };
 
   if (loading) return <div className="min-h-screen flex items-center justify-center p-6">Loading...</div>;
+  if (loadError) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-teal-50 gap-4">
+        <p className="text-red-700 text-center">{loadError}</p>
+        <button type="button" onClick={() => { setLoading(true); load(); }} className="min-h-touch px-4 py-2 bg-teal-600 text-white rounded-lg font-medium">Try again</button>
+        <Link to="/" className="min-h-touch px-4 py-2 bg-teal-600 text-white rounded-lg font-medium">Home</Link>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-teal-50">

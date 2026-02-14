@@ -31,6 +31,16 @@ npm run dev
 
 Open **http://localhost:5173**. Allow camera when prompted for "Who is this?".
 
+### Live conversation summary (optional)
+
+On **Who is this?**, the app uses the **Web Speech API** to listen to the room. When you **tap a recognized person’s face**, it sends the recent transcript to the backend, which uses **Groq** to summarize it into 2–3 sentences and saves it as that person’s last conversation.
+
+1. Set your Groq API key (get one at [console.groq.com](https://console.groq.com/)):
+   - **Local:** copy `backend/.env.example` to `backend/.env` and set `GROQ_API_KEY=your-key`.
+   - **Docker:** set `GROQ_API_KEY` in your environment or in `docker-compose.yml` under `backend` → `environment`.
+2. Allow **microphone** when the browser asks on the Who is this? page.
+3. Talk; then tap a face to summarize and save the conversation for that person.
+
 ---
 
 ## Docker (Windows, macOS, Linux)
