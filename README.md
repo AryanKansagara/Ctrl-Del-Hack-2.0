@@ -4,7 +4,7 @@
            <br />
   <p align="center">
     <a href="https://devpost.com/software/recall-y8i430">
-      <strong>« HackHive DevPost »</strong>
+      <strong>« CTRL+HACK+DEL 2.0 DevPost »</strong>
                <br />
     </a>
   </p>
