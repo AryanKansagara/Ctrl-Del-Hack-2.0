@@ -143,7 +143,7 @@ export default function EmergencyPage() {
             <Button variant="emergency" onClick={handleCall} className="w-full max-w-sm min-h-[72px]">
               Call {primary?.name ?? "emergency"}
             </Button>
-            <Button variant="secondary" onClick={handleShare} className="w-full max-w-sm min-h-touch py-4 text-lg bg-gray-600 border-gray-600 hover:bg-gray-700 hover:border-gray-700 !text-white">
+            <Button variant="secondary" onClick={handleShare} className="w-full max-w-sm min-h-touch py-4 text-lg !bg-gray-600 !border-gray-600 hover:!bg-gray-700 hover:!border-gray-700 !text-white">
               Share my location
             </Button>
             {locationError && <p className="text-red-600 text-sm text-center">{locationError}</p>}

@@ -91,7 +91,7 @@ export default function RemindersPage() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
           <PageHeading>Reminders</PageHeading>
           <div className="flex gap-2">
-            <Button variant="secondary" onClick={() => setAddMode(true)} className="bg-gray-600 border-gray-600 hover:bg-gray-700 hover:border-gray-700 !text-white">Add</Button>
+            <Button variant="secondary" onClick={() => setAddMode(true)} className="!bg-gray-600 !border-gray-600 hover:!bg-gray-700 hover:!border-gray-700 !text-white">Add</Button>
           </div>
         </div>
 
