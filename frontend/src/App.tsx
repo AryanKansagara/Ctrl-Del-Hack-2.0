@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { CalmModeProvider } from "./context/CalmModeContext";
 import Home from "./pages/Home";
 import LiveView from "./pages/LiveView";
 import PeopleList from "./pages/PeopleList";
@@ -11,6 +12,7 @@ import ReminderNotifier from "./ReminderNotifier";
 export default function App() {
   return (
     <BrowserRouter>
+      <CalmModeProvider>
       <ReminderNotifier />
       <Routes>
         <Route path="/" element={<Home />} />
@@ -22,6 +24,7 @@ export default function App() {
         <Route path="/reminders" element={<RemindersPage />} />
         <Route path="/emergency" element={<EmergencyPage />} />
       </Routes>
+      </CalmModeProvider>
     </BrowserRouter>
   );
 }

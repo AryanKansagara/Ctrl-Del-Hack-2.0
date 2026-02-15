@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import CalmModeButton from "./CalmModeButton";
 
 export default function Navbar() {
   return (
@@ -6,7 +7,8 @@ export default function Navbar() {
       <Link to="/" className="text-xl font-bold text-gray-900 tracking-tight hover:text-gray-700 transition">
         Recall
       </Link>
-      <nav className="flex items-center gap-6">
+      <nav className="flex items-center gap-4 flex-wrap">
+        <CalmModeButton />
         <Link
           to="/live"
           className="min-h-touch px-2 py-2 text-recall-nav font-medium text-base hover:text-gray-900 transition"

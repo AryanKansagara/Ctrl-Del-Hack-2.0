@@ -206,3 +206,55 @@ export async function deleteEmergencyContact(id: number): Promise<void> {
   const r = await fetch(`${API}/emergency-contacts/${id}`, { method: "DELETE" });
   if (!r.ok) throw new Error("Failed to delete emergency contact");
 }
+
+// ---------- Calm Mode ----------
+export type CalmReassuranceResponse = {
+  message: string;
+  messages?: string[];
+};
+
+export async function getCalmReassurance(params: {
+  location?: string | null;
+  nearbyPerson?: string | null;
+}): Promise<CalmReassuranceResponse> {
+  const r = await fetchWithTimeout(`${API}/calm/reassurance`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      location: params.location || undefined,
+      nearby_person: params.nearbyPerson || undefined,
+    }),
+  });
+  if (!r.ok) return { message: "You're safe. Everything is okay. You're not alone.", messages: ["You're safe.", "Everything is okay.", "You're not alone."] };
+  return r.json();
+}
+
+export async function getCalmReply(params: {
+  userMessage: string;
+  location?: string | null;
+  nearbyPerson?: string | null;
+  history?: { role: string; content: string }[];
+}): Promise<CalmReassuranceResponse> {
+  const r = await fetchWithTimeout(`${API}/calm/reply`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      user_message: params.userMessage,
+      location: params.location || undefined,
+      nearby_person: params.nearbyPerson || undefined,
+      history: params.history,
+    }),
+  });
+  if (!r.ok) return { message: "You're safe. I'm here with you. Everything is okay.", messages: ["You're safe. I'm here with you. Everything is okay."] };
+  return r.json();
+}
+
+export async function getCalmSpeakAudio(text: string): Promise<Blob | null> {
+  const r = await fetch(`${API}/calm/speak`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ text }),
+  });
+  if (r.status === 503 || !r.ok) return null;
+  return r.blob();
+}

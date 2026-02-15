@@ -117,3 +117,27 @@ class EmergencyContactResponse(EmergencyContactBase):
 
     class Config:
         from_attributes = True
+
+
+class CalmReassuranceRequest(BaseModel):
+    """Optional context for generating a calm reassurance message."""
+    location: Optional[str] = None
+    nearby_person: Optional[str] = None
+
+
+class CalmReassuranceResponse(BaseModel):
+    """Full message (joined) and optional list of lines for conversational delivery."""
+    message: str
+    messages: Optional[List[str]] = None  # when set, frontend speaks line-by-line
+
+
+class CalmReplyRequest(BaseModel):
+    """User's spoken message; optional context and history for a back-and-forth reply."""
+    user_message: str
+    location: Optional[str] = None
+    nearby_person: Optional[str] = None
+    history: Optional[List[dict]] = None  # [{ "role": "user"|"assistant", "content": "..." }]
+
+
+class CalmSpeakRequest(BaseModel):
+    text: str = ""

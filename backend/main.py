@@ -8,6 +8,7 @@ load_dotenv()
 from datetime import date
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import Response
 from sqlalchemy.orm import Session
 import httpx
 
@@ -27,6 +28,10 @@ from schemas import (
     EmergencyContactCreate,
     EmergencyContactUpdate,
     EmergencyContactResponse,
+    CalmReassuranceRequest,
+    CalmReassuranceResponse,
+    CalmReplyRequest,
+    CalmSpeakRequest,
 )
 
 
@@ -380,6 +385,188 @@ def delete_emergency_contact(contact_id: int, db: Session = Depends(get_db)):
     return {"ok": True}
 
 
-@app.get("/api/health")
-def health():
-    return {"status": "ok"}
+# ---------- Calm Mode (conversational reassurance + optional TTS) ----------
+
+
+def _generate_calm_conversation(location: str | None, nearby_person: str | None) -> tuple[str, list[str]]:
+    """Generate a short conversational reassurance: (full_message, list of lines)."""
+    fallback_msg, fallback_lines = _calm_fallback_conversation(location, nearby_person)
+    if not GROQ_API_KEY:
+        return fallback_msg, fallback_lines
+    parts = []
+    if location:
+        parts.append(f"Current place: {location}")
+    if nearby_person:
+        parts.append(f"Person nearby: {nearby_person}")
+    context = " ".join(parts) if parts else "No specific context."
+    system = (
+        "You are having a gentle, reassuring conversation with someone who said they feel confused. "
+        "Start by reassuring them, then invite them to talk. Use 3 to 5 short sentences. "
+        "Always start with 'You're safe.' Mention where they are or who is with them if we have that. "
+        "End by inviting them to share (e.g. 'What's on your mind?' or 'You can tell me how you're feeling.'). "
+        "Output exactly one sentence per line. No numbering, no quotes, no labels."
+    )
+    user = f"Context: {context}. Write the short opening, one sentence per line, ending with an invitation to talk."
+    try:
+        with httpx.Client(timeout=15.0) as client:
+            r = client.post(
+                GROQ_URL,
+                headers={
+                    "Authorization": f"Bearer {GROQ_API_KEY}",
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "model": SUMMARY_MODEL,
+                    "messages": [
+                        {"role": "system", "content": system},
+                        {"role": "user", "content": user},
+                    ],
+                },
+            )
+            r.raise_for_status()
+            data = r.json()
+            choices = data.get("choices") or []
+            if choices:
+                content = (choices[0].get("message") or {}).get("content") or ""
+                raw = (content or "").strip()
+                if raw and "safe" in raw.lower():
+                    lines = [ln.strip() for ln in raw.splitlines() if ln.strip()][:8]
+                    if lines:
+                        return " ".join(lines), lines
+    except Exception:
+        pass
+    return fallback_msg, fallback_lines
+
+
+def _calm_fallback_conversation(location: str | None, nearby_person: str | None) -> tuple[str, list[str]]:
+    """Fixed conversational lines when AI is unavailable."""
+    lines = ["You're safe.", "I'm right here with you."]
+    if location:
+        lines.append(f"You're at {location} right now.")
+    if nearby_person:
+        lines.append(f"{nearby_person} is nearby.")
+    lines.extend(["Everything is okay.", "You're not alone."])
+    return " ".join(lines), lines
+
+
+def _generate_calm_reply(
+    user_message: str,
+    location: str | None,
+    nearby_person: str | None,
+    history: list | None,
+) -> tuple[str, list[str]]:
+    """Generate a reassuring reply to what the user just said (real back-and-forth)."""
+    fallback = ("You're safe. I'm here with you. Everything is okay.", ["You're safe. I'm here with you. Everything is okay."])
+    if not GROQ_API_KEY:
+        return fallback
+    user_text = (user_message or "").strip()[:500]
+    if not user_text:
+        return fallback
+    context_parts = []
+    if location:
+        context_parts.append(f"They are at: {location}.")
+    if nearby_person:
+        context_parts.append(f"Someone with them: {nearby_person}.")
+    context = " ".join(context_parts) if context_parts else ""
+
+    system = (
+        "You are a calm, kind voice talking to someone who said they feel confused. "
+        "They just said something; you respond with a short, reassuring reply. "
+        "Acknowledge what they said briefly. Keep it 2 to 4 short sentences. "
+        "Always be gentle. Use simple words. One sentence per line. No numbering or labels."
+    )
+    messages = [{"role": "system", "content": system}]
+    if history:
+        for h in history[-6:]:  # last 3 exchanges
+            role = (h.get("role") or "user").strip().lower()
+            if role not in ("user", "assistant"):
+                role = "user"
+            content = (h.get("content") or "").strip()
+            if content:
+                messages.append({"role": role, "content": content})
+    messages.append({"role": "user", "content": f"{context} What they just said: {user_text}".strip()})
+
+    try:
+        with httpx.Client(timeout=15.0) as client:
+            r = client.post(
+                GROQ_URL,
+                headers={
+                    "Authorization": f"Bearer {GROQ_API_KEY}",
+                    "Content-Type": "application/json",
+                },
+                json={"model": SUMMARY_MODEL, "messages": messages},
+            )
+            r.raise_for_status()
+            data = r.json()
+            choices = data.get("choices") or []
+            if choices:
+                content = (choices[0].get("message") or {}).get("content") or ""
+                raw = (content or "").strip()
+                if raw:
+                    lines = [ln.strip() for ln in raw.splitlines() if ln.strip()][:6]
+                    if lines:
+                        return " ".join(lines), lines
+    except Exception:
+        pass
+    return fallback
+
+
+ELEVENLABS_API_KEY = os.environ.get("ELEVENLABS_API_KEY")
+ELEVENLABS_VOICE_ID = os.environ.get("ELEVENLABS_VOICE_ID", "EXAVITQu4vr4xnSDxMaL")  # calm default
+ELEVENLABS_URL_TEMPLATE = "https://api.elevenlabs.io/v1/text-to-speech/{voice_id}"
+
+
+def _text_to_speech_elevenlabs(text: str) -> bytes | None:
+    """Return MP3 bytes or None if ElevenLabs is unavailable or fails."""
+    if not ELEVENLABS_API_KEY or not (text or "").strip():
+        return None
+    url = ELEVENLABS_URL_TEMPLATE.format(voice_id=ELEVENLABS_VOICE_ID)
+    try:
+        with httpx.Client(timeout=15.0) as client:
+            r = client.post(
+                url,
+                headers={
+                    "xi-api-key": ELEVENLABS_API_KEY,
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "text": (text or "").strip()[:1000],
+                    "model_id": "eleven_monolingual_v1",
+                },
+            )
+            if r.status_code == 200 and r.content:
+                return r.content
+    except Exception:
+        pass
+    return None
+
+
+@app.post("/api/calm/reassurance", response_model=CalmReassuranceResponse)
+def calm_reassurance(data: CalmReassuranceRequest):
+    """Generate initial reassurance, then frontend listens and calls /reply for back-and-forth."""
+    location = (data.location or "").strip() or None
+    nearby = (data.nearby_person or "").strip() or None
+    message, messages = _generate_calm_conversation(location, nearby)
+    return CalmReassuranceResponse(message=message, messages=messages)
+
+
+@app.post("/api/calm/reply", response_model=CalmReassuranceResponse)
+def calm_reply(data: CalmReplyRequest):
+    """Respond to what the user just said (back-and-forth conversation)."""
+    location = (data.location or "").strip() or None
+    nearby = (data.nearby_person or "").strip() or None
+    history = data.history if isinstance(data.history, list) else None
+    message, messages = _generate_calm_reply(data.user_message, location, nearby, history)
+    return CalmReassuranceResponse(message=message, messages=messages)
+
+
+@app.post("/api/calm/speak")
+def calm_speak(body: CalmSpeakRequest):
+    """Return TTS audio (ElevenLabs) or 503 so client can use Web Speech API."""
+    text = (body.text or "").strip()
+    if not text:
+        raise HTTPException(status_code=400, detail="text required")
+    audio = _text_to_speech_elevenlabs(text)
+    if audio is None:
+        raise HTTPException(status_code=503, detail="TTS unavailable")
+    return Response(content=audio, media_type="audio/mpeg")

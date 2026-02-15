@@ -1,6 +1,6 @@
-# Remember Me — MVP
+# Recall — MVP
 
-Alzheimer's companion web app: **camera → face recognition → name overlay**, plus **People**, **Conversations**, **Reminders**, and **Emergency** (call + share location).
+**Recall** is an Alzheimer's companion web app: **camera → face recognition → name overlay**, plus **People**, **Conversations**, **Reminders**, and **Emergency** (call + share location).
 
 ## Stack
 
@@ -29,16 +29,16 @@ npm install
 npm run dev
 ```
 
-Open **http://localhost:5173**. Allow camera when prompted for "Who is this?".
+Open **http://localhost:5173**. Allow camera when prompted on **Identify**.
 
 ### Live conversation summary (optional)
 
-On **Who is this?**, the app uses the **Web Speech API** to listen to the room. When you **tap a recognized person’s face**, it sends the recent transcript to the backend, which uses **Groq** to summarize it into 2–3 sentences and saves it as that person’s last conversation.
+On **Identify**, Recall uses the **Web Speech API** to listen to the room. When you **tap a recognized person’s face**, it sends the recent transcript to the backend, which uses **Groq** to summarize it into 1–2 lines and saves it as that person’s last conversation.
 
 1. Set your Groq API key (get one at [console.groq.com](https://console.groq.com/)):
    - **Local:** copy `backend/.env.example` to `backend/.env` and set `GROQ_API_KEY=your-key`.
    - **Docker:** set `GROQ_API_KEY` in your environment or in `docker-compose.yml` under `backend` → `environment`.
-2. Allow **microphone** when the browser asks on the Who is this? page.
+2. Allow **microphone** when the browser asks on the Identify page.
 3. Talk; then tap a face to summarize and save the conversation for that person.
 
 ---
@@ -76,11 +76,12 @@ First run may take a few minutes to build images and install dependencies. Code 
 
 ### 3. First use
 
-1. **People** → Add person (name, relationship, one clear front-facing photo). The app computes a face descriptor for recognition.
-2. **Who is this?** → Start camera; faces are labeled in real time. Tap a face to see **Last conversation**.
-3. **Conversation** → From a recognized person, add a "last conversation" (date + summary).
+1. **People** → Add person (name, relationship, one clear front-facing photo). Recall computes a face descriptor for recognition.
+2. **Identify** → Start camera; faces are labeled in real time. Tap a face to see **Last conversation**.
+3. **Conversation** → From a recognized person, view or add a last conversation (date + summary).
 4. **Reminders** → Add reminders (e.g. "Morning medicine" at 09:00).
 5. **Emergency** → Add an emergency contact, then use **Call** and **Share my location**.
+6. **Calm Mode** → The **I feel confused** button (in the nav on every page) plays a short spoken reassurance and shows it on screen. Tap again to stop. Uses Groq for the message (or a fixed fallback) and ElevenLabs for voice when configured, otherwise the browser’s speech.
 
 ## Security notes
 
@@ -100,6 +101,8 @@ If the CDN fails (e.g. offline or network restrictions), copy the face-api.js we
 - `GET/POST /api/conversations`, `GET /api/people/{id}/last-conversation`
 - `GET/POST/PATCH/DELETE /api/reminders`
 - `GET/POST/PATCH/DELETE /api/emergency-contacts`
+- `POST /api/calm/reassurance` — body: `{ location?, nearby_person? }` → `{ message }`
+- `POST /api/calm/speak` — body: `{ text }` → audio (or 503; then use Web Speech API)
 - `GET /api/health`
 
 Docs: **http://localhost:8000/docs** when the backend is running.
