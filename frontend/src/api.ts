@@ -105,8 +105,12 @@ export async function updatePerson(
 }
 
 export async function deletePerson(id: number): Promise<void> {
-  const r = await fetch(`${API}/people/${id}`, { method: "DELETE" });
-  if (!r.ok) throw new Error("Failed to delete person");
+  const r = await fetchWithTimeout(`${API}/people/${id}`, { method: "DELETE" });
+  if (!r.ok) {
+    const msg = await r.json().catch(() => ({}));
+    const detail = typeof (msg as { detail?: string }).detail === "string" ? (msg as { detail: string }).detail : "Failed to delete person";
+    throw new Error(detail);
+  }
 }
 
 export async function getLastConversation(personId: number): Promise<Conversation | null> {

@@ -14,7 +14,7 @@ export default function PeopleList() {
       setPeople(list);
       setError(null);
     } catch (e) {
-      setError("Could not load people. Is the API running?");
+      setError("Could not load people. Start the backend (e.g. cd backend && uvicorn main:app --reload --port 8000). Calm Mode and other features still work without it.");
     } finally {
       setLoading(false);
     }
@@ -30,7 +30,7 @@ export default function PeopleList() {
       await deletePerson(id);
       await load();
     } catch (e) {
-      setError("Failed to delete.");
+      setError(e instanceof Error ? e.message : "Failed to delete.");
     }
   };
 
@@ -107,7 +107,7 @@ export default function PeopleList() {
                     >
                       Edit
                     </Link>
-                    <Button variant="danger" onClick={() => handleDelete(p.id, p.name)}>
+                    <Button type="button" variant="danger" onClick={() => handleDelete(p.id, p.name)}>
                       Delete
                     </Button>
                   </div>

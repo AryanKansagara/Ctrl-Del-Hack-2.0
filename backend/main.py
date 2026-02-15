@@ -169,6 +169,8 @@ def delete_person(person_id: int, db: Session = Depends(get_db)):
     p = db.query(Person).filter(Person.id == person_id).first()
     if not p:
         raise HTTPException(status_code=404, detail="Person not found")
+    # Delete conversations first (SQLite may not cascade if FKs were added later)
+    db.query(Conversation).filter(Conversation.person_id == person_id).delete()
     db.delete(p)
     db.commit()
     return {"ok": True}

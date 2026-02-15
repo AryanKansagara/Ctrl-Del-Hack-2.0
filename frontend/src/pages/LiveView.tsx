@@ -72,6 +72,7 @@ export default function LiveView() {
   const listeningActiveRef = useRef(true);
 
   const [error, setError] = useState<string | null>(null);
+  const [apiPeopleError, setApiPeopleError] = useState<string | null>(null);
   const [modelsReady, setModelsReady] = useState(false);
   const [people, setPeople] = useState<PersonForRecognition[]>([]);
   const [matches, setMatches] = useState<FaceMatch[]>([]);
@@ -98,9 +99,15 @@ export default function LiveView() {
       setModelsReady(true);
       try {
         const list = await getPeopleForRecognition();
-        if (!cancelled) setPeople(list);
+        if (!cancelled) {
+          setPeople(list);
+          setApiPeopleError(null);
+        }
       } catch (e) {
-        if (!cancelled) setError("Could not load people. Is the API running?");
+        if (!cancelled) {
+          setPeople([]);
+          setApiPeopleError("Could not load people for recognition. Start the backend (cd backend && uvicorn main:app --reload --port 8000) to see names.");
+        }
       }
     })();
     return () => {
@@ -322,6 +329,12 @@ export default function LiveView() {
   return (
     <Layout>
       <div className="flex-1 min-h-0 overflow-y-auto flex flex-col items-center p-4 gap-4">
+        {apiPeopleError && (
+          <div className="w-full max-w-2xl rounded-card bg-amber-50 border border-amber-200 px-4 py-3 text-amber-800 text-sm flex items-center justify-between gap-2">
+            <span>{apiPeopleError}</span>
+            <button type="button" onClick={() => setApiPeopleError(null)} className="shrink-0 text-amber-600 hover:underline font-medium" aria-label="Dismiss">Dismiss</button>
+          </div>
+        )}
         <div className="w-full max-w-5xl flex flex-col lg:flex-row gap-4 items-start justify-center">
           {/* Left column: video + listening card */}
           <div className="w-full max-w-2xl flex-shrink-0">
