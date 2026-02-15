@@ -1,10 +1,23 @@
 # Recall
 
-**A gentle companion for people with Alzheimer's: see who's in front of you, recall your last conversation, and get calm reassurance with one tap.**
-
-*[Add your demo or live app link here]*
+<div style="margin: -10px 0;" align="center">
+           <br />
+  <p align="center">
+    <a href="https://devpost.com/submit-to/26868-hackhive-2026/manage/submissions/914262/project-overview](https://devpost.com/software/rosetta-hq6aby">
+      <strong>« HackHive DevPost »</strong>
+               <br />
+    </a>
+  </p>
+</div>
+A gentle companion for people with Alzheimer's: see who's in front of you, recall your last conversation, and get calm reassurance with one tap.
 
 Recall is a web application that helps people with Alzheimer's and other memory-related conditions—and their caregivers—stay oriented, connected, and safe. Real-time face recognition answers "Who is this?" at a glance. Per-person conversation memory answers "What did we talk about?" One-tap Calm Mode starts a real voice conversation that listens and reassures. Reminders and emergency (call + share location) support daily life and safety. All designed to be simple, private, and always on your side.
+
+<div align="center">
+  <a href="https://www.youtube.com/watch?v=RnzwBhRtdv8">
+    <img src="https://img.shields.io/badge/▶️_Watch_Demo_Video-FF0000?style=for-the-badge&logo=youtube&logoColor=white" alt="Demo Video"/>
+  </a>
+</div>
 
 ---
 
@@ -316,7 +329,6 @@ Set `GROQ_API_KEY` and `ELEVENLABS_API_KEY` in the backend service environment f
 ## Documentation
 
 - **Product & submission:** [docs/PRD.md](docs/PRD.md), [docs/DEVPOST.md](docs/DEVPOST.md)
-- **Demo script:** [docs/DEMO-SPEECH.md](docs/DEMO-SPEECH.md)
 - **API:** http://localhost:8000/docs when the backend is running
 
 ---
@@ -337,6 +349,6 @@ Set `GROQ_API_KEY` and `ELEVENLABS_API_KEY` in the backend service environment f
 
 ---
 
-## Team & License
+## License
 
-Built for [your hackathon name]. Recall uses [face-api.js](https://github.com/justadudewhohacks/face-api.js), [Groq](https://groq.com/), and optionally [ElevenLabs](https://elevenlabs.io/). Add your team members and license (e.g. MIT) here.
+MIT License - see [LICENSE](LICENSE) for details.
