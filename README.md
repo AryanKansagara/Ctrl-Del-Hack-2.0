@@ -3,7 +3,7 @@
 <div style="margin: -10px 0;" align="center">
            <br />
   <p align="center">
-    <a href="[https://devpost.com/submit-to/26868-hackhive-2026/manage/submissions/914262/project-overview](https://devpost.com/software/rosetta-hq6aby](https://devpost.com/software/recall-y8i430)">
+    <a href="https://devpost.com/software/recall-y8i430">
       <strong>« HackHive DevPost »</strong>
                <br />
     </a>
